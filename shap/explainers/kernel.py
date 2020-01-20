@@ -9,7 +9,6 @@ import itertools
 import warnings
 from sklearn.linear_model import LassoLarsIC, Lasso, lars_path
 from sklearn.cluster import KMeans
-from tqdm.auto import tqdm
 from .explainer import Explainer
 
 log = logging.getLogger('shap')
@@ -76,7 +75,7 @@ class KernelExplainer(Explainer):
         this background dataset can be the whole training set, but for larger problems consider
         using a single reference value or using the kmeans function to summarize the dataset.
         Note: for sparse case we accept any sparse matrix but convert to lil format for
-        performance. 
+        performance.
 
     link : "identity" or "logit"
         A generalized linear model link to connect the feature importance values to the model
@@ -119,7 +118,7 @@ class KernelExplainer(Explainer):
             model_null = np.squeeze(model_null.values)
         self.fnull = np.sum((model_null.T * self.data.weights).T, 0)
         self.expected_value = self.linkfv(self.fnull)
-        
+
         # see if we have a vector output
         self.vector_out = True
         if len(self.fnull.shape) == 0:
@@ -129,7 +128,7 @@ class KernelExplainer(Explainer):
             self.expected_value = float(self.expected_value)
         else:
             self.D = self.fnull.shape[0]
-        
+
 
     def shap_values(self, X, **kwargs):
         """ Estimate the SHAP values for a set of samples.
@@ -171,7 +170,7 @@ class KernelExplainer(Explainer):
                 index_name = X.index.name
                 column_name = list(X.columns)
             X = X.values
-        
+
         x_type = str(type(X))
         arr_type = "'numpy.ndarray'>"
         # if sparse, convert to lil for performance
@@ -204,7 +203,7 @@ class KernelExplainer(Explainer):
         # explain the whole dataset
         elif len(X.shape) == 2:
             explanations = []
-            for i in tqdm(range(X.shape[0]), disable=kwargs.get("silent", False)):
+            for i in range(X.shape[0]):
                 data = X[i:i + 1, :]
                 if self.keep_index:
                     data = convert_to_instance_with_index(data, column_name, index_value[i:i + 1], index_name)
@@ -307,7 +306,7 @@ class KernelExplainer(Explainer):
             # given nsamples*remaining_weight_vector[subset_size]
             num_full_subsets = 0
             num_samples_left = self.nsamples
-            group_inds = np.arange(self.M, dtype='int64') 
+            group_inds = np.arange(self.M, dtype='int64')
             mask = np.zeros(self.M)
             remaining_weight_vector = copy.copy(weight_vector)
             for subset_size in range(1, num_subset_sizes + 1):
@@ -569,12 +568,12 @@ class KernelExplainer(Explainer):
             if isinstance(self.l1_reg, str) and self.l1_reg.startswith("num_features("):
                 r = int(self.l1_reg[len("num_features("):-1])
                 nonzero_inds = lars_path(mask_aug, eyAdj_aug, max_iter=r)[1]
-            
+
             # use an adaptive regularization method
             elif self.l1_reg == "auto" or self.l1_reg == "bic" or self.l1_reg == "aic":
                 c = "aic" if self.l1_reg == "auto" else self.l1_reg
                 nonzero_inds = np.nonzero(LassoLarsIC(criterion=c).fit(mask_aug, eyAdj_aug).coef_)[0]
-            
+
             # use a fixed regularization coeffcient
             else:
                 nonzero_inds = np.nonzero(Lasso(alpha=self.l1_reg).fit(mask_aug, eyAdj_aug).coef_)[0]

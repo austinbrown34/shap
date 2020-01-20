@@ -1,7 +1,6 @@
 import numpy as np
 import scipy as sp
 import warnings
-from tqdm.autonotebook import tqdm
 from .explainer import Explainer
 
 class LinearExplainer(Explainer):
@@ -110,7 +109,7 @@ class LinearExplainer(Explainer):
                 self.expected_value = np.array(self.expected_value)[0]
         else:
             self.expected_value = np.dot(self.coef, self.mean) + self.intercept
-        
+
         self.M = len(self.mean)
 
         # if needed, estimate the transform matrices
@@ -155,7 +154,7 @@ class LinearExplainer(Explainer):
         mean_transform = np.zeros((M,M))
         x_transform = np.zeros((M,M))
         inds = np.arange(M, dtype=np.int)
-        for _ in tqdm(range(nsamples), "Estimating transforms"):
+        for _ in range(nsamples):
             np.random.shuffle(inds)
             cov_inv_SiSi = np.zeros((0,0))
             cov_Si = np.zeros((M,0))
@@ -265,7 +264,7 @@ def duplicate_components(C):
                     count += 1
                     found_group = True
                 components[j] = count
-                
+
     proj = np.zeros((len(np.unique(components)), C.shape[0]))
     proj[0, 0] = 1
     for i in range(1,C.shape[0]):

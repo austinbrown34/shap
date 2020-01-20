@@ -1,5 +1,4 @@
 import numpy as np
-from tqdm.autonotebook import tqdm
 import gc
 import warnings
 import sklearn.utils
@@ -44,7 +43,7 @@ def remove_retrain(nmask, X_train, y_train, X_test, y_test, attr_test, model_gen
     tie_breaking_noise = const_rand(X_train.shape[1]) * 1e-6
     last_nmask = _remove_cache.get("nmask", None)
     last_yp_masked_test = _remove_cache.get("yp_masked_test", None)
-    for i in tqdm(range(len(y_test)), "Retraining for the 'remove' metric"):
+    for i in range(len(y_test)):
         if cache_match and last_nmask[i] == nmask[i]:
             yp_masked_test[i] = last_yp_masked_test[i]
         elif nmask[i] == 0:
@@ -86,7 +85,7 @@ def remove_mask(nmask, X_train, y_train, X_test, y_test, attr_test, model_genera
         if nmask[i] > 0:
             ordering = np.argsort(-attr_test[i,:] + tie_breaking_noise)
             X_test_tmp[i,ordering[:nmask[i]]] = mean_vals[ordering[:nmask[i]]]
-    
+
     yp_masked_test = trained_model.predict(X_test_tmp)
 
     return metric(y_test, yp_masked_test)
@@ -116,12 +115,12 @@ def remove_impute(nmask, X_train, y_train, X_test, y_test, attr_test, model_gene
             ordering = np.argsort(-attr_test[i,:] + tie_breaking_noise)
             observe_inds = ordering[nmask[i]:]
             impute_inds = ordering[:nmask[i]]
-            
+
             # impute missing data assuming it follows a multivariate normal distribution
             Coo_inv = np.linalg.inv(C[observe_inds,:][:,observe_inds])
             Cio = C[impute_inds,:][:,observe_inds]
             impute = mean_vals[impute_inds] + Cio @ Coo_inv @ (X_test[i, observe_inds] - mean_vals[observe_inds])
-            
+
             X_test_tmp[i, impute_inds] = impute
 
     yp_masked_test = trained_model.predict(X_test_tmp)
@@ -231,7 +230,7 @@ def keep_retrain(nkeep, X_train, y_train, X_test, y_test, attr_test, model_gener
     tie_breaking_noise = const_rand(X_train.shape[1]) * 1e-6
     last_nkeep = _keep_cache.get("nkeep", None)
     last_yp_masked_test = _keep_cache.get("yp_masked_test", None)
-    for i in tqdm(range(len(y_test)), "Retraining for the 'keep' metric"):
+    for i in range(len(y_test)):
         if cache_match and last_nkeep[i] == nkeep[i]:
             yp_masked_test[i] = last_yp_masked_test[i]
         elif nkeep[i] == attr_test.shape[1]:
@@ -305,12 +304,12 @@ def keep_impute(nkeep, X_train, y_train, X_test, y_test, attr_test, model_genera
             ordering = np.argsort(-attr_test[i,:] + tie_breaking_noise)
             observe_inds = ordering[:nkeep[i]]
             impute_inds = ordering[nkeep[i]:]
-            
+
             # impute missing data assuming it follows a multivariate normal distribution
             Coo_inv = np.linalg.inv(C[observe_inds,:][:,observe_inds])
             Cio = C[impute_inds,:][:,observe_inds]
             impute = mean_vals[impute_inds] + Cio @ Coo_inv @ (X_test[i, observe_inds] - mean_vals[observe_inds])
-            
+
             X_test_tmp[i, impute_inds] = impute
 
     yp_masked_test = trained_model.predict(X_test_tmp)
